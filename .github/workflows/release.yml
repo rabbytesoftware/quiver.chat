@@ -1,0 +1,134 @@
+name: Release - Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test Before Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.2'
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Download dependencies
+      run: go mod download
+    
+    - name: Verify dependencies
+      run: go mod verify
+    
+    - name: Build application
+      run: go build -v ./...
+    
+    - name: Run tests
+      run: go test -v -race ./...
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.2'
+    
+    - name: Get version from commit
+      id: version
+      run: |
+        # Get version from build.sh or use timestamp
+        VERSION=$(grep 'VERSION=' build.sh | cut -d'"' -f2 || echo "")
+        if [ -z "$VERSION" ]; then
+          VERSION="v$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
+        else
+          VERSION="v${VERSION}-$(git rev-parse --short HEAD)"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+    
+    - name: Build cross-platform binaries
+      run: |
+        chmod +x build.sh
+        ./build.sh
+    
+    - name: Create release archives
+      run: |
+        cd dist
+        # Create archives for each platform
+        tar -czf quiver-chat-linux-amd64.tar.gz quiver-chat-linux-amd64
+        tar -czf quiver-chat-linux-arm64.tar.gz quiver-chat-linux-arm64
+        tar -czf quiver-chat-macos-amd64.tar.gz quiver-chat-macos-amd64
+        tar -czf quiver-chat-macos-arm64.tar.gz quiver-chat-macos-arm64
+        zip quiver-chat-windows-amd64.zip quiver-chat-windows-amd64.exe
+        zip quiver-chat-windows-arm64.zip quiver-chat-windows-arm64.exe
+    
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        echo "🚀 **Quiver Chat Release ${{ steps.version.outputs.version }}**" > release_notes.md
+        echo "" >> release_notes.md
+        echo "This release contains the latest version of Quiver Chat with the following binaries:" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## 📦 Available Downloads" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Linux" >> release_notes.md
+        echo "- \`quiver-chat-linux-amd64.tar.gz\` - Linux x64" >> release_notes.md
+        echo "- \`quiver-chat-linux-arm64.tar.gz\` - Linux ARM64" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### macOS" >> release_notes.md
+        echo "- \`quiver-chat-macos-amd64.tar.gz\` - macOS Intel" >> release_notes.md
+        echo "- \`quiver-chat-macos-arm64.tar.gz\` - macOS Apple Silicon" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Windows" >> release_notes.md
+        echo "- \`quiver-chat-windows-amd64.zip\` - Windows x64" >> release_notes.md
+        echo "- \`quiver-chat-windows-arm64.zip\` - Windows ARM64" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## 🚀 Quick Start" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "1. Download the appropriate binary for your platform" >> release_notes.md
+        echo "2. Extract the archive" >> release_notes.md
+        echo "3. Run the binary: \`./quiver-chat-[platform]\`" >> release_notes.md
+        echo "4. Open your browser and navigate to http://localhost:8080" >> release_notes.md
+        echo "5. Choose a nickname and start chatting!" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## 📝 Recent Changes" >> release_notes.md
+        echo "" >> release_notes.md
+        # Get recent commits
+        git log --oneline -10 --no-merges >> release_notes.md
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: "Quiver Chat ${{ steps.version.outputs.version }}"
+        body_path: release_notes.md
+        files: |
+          dist/*.tar.gz
+          dist/*.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
