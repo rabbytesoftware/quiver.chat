@@ -59,8 +59,8 @@ jobs:
     - name: Get version from commit
       id: version
       run: |
-        # Get version from build.sh or use timestamp
-        VERSION=$(grep 'VERSION=' build.sh | cut -d'"' -f2 || echo "")
+        # Get version from Makefile or use timestamp
+        VERSION=$(grep 'VERSION :=' Makefile | cut -d' ' -f3 || echo "")
         if [ -z "$VERSION" ]; then
           VERSION="v$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
         else
@@ -68,22 +68,9 @@ jobs:
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
-    
-    - name: Build cross-platform binaries
-      run: |
-        chmod +x build.sh
-        ./build.sh
-    
-    - name: Create release archives
-      run: |
-        cd dist
-        # Create archives for each platform
-        tar -czf quiver-chat-linux-amd64.tar.gz quiver-chat-linux-amd64
-        tar -czf quiver-chat-linux-arm64.tar.gz quiver-chat-linux-arm64
-        tar -czf quiver-chat-macos-amd64.tar.gz quiver-chat-macos-amd64
-        tar -czf quiver-chat-macos-arm64.tar.gz quiver-chat-macos-arm64
-        zip quiver-chat-windows-amd64.zip quiver-chat-windows-amd64.exe
-        zip quiver-chat-windows-arm64.zip quiver-chat-windows-arm64.exe
+
+    - name: Build cross-platform binaries and create archives
+      run: make release-archives
     
     - name: Generate release notes
       id: release_notes

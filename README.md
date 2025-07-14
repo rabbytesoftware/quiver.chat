@@ -1,153 +1,140 @@
-# 🚀 Quiver Chat
+# Quiver Chat 🚀
 
-A simple, lightweight chatroom application written in Go that runs as a single executable with no external dependencies.
+A modern, real-time chat application built with **Next.js + shadcn/ui** frontend and **Go** backend. All frontend assets are embedded in the Go binary for zero-dependency deployment.
 
-## ✨ Features
+## Features
 
-- **Cross-platform**: Runs on Windows, Linux, and macOS
-- **Zero dependencies**: Single executable file that includes everything
-- **Web-based client**: Access via any modern web browser
-- **Real-time messaging**: WebSocket-based instant messaging
-- **No user management**: Simple nickname-based chat
-- **Modern UI**: Clean, responsive design that works on desktop and mobile
-- **Auto-reconnection**: Client automatically reconnects if connection is lost
+- 🎨 **Modern UI**: Built with Next.js, TypeScript, and shadcn/ui components
+- 💬 **Real-time Chat**: WebSocket-based communication
+- 🔄 **Zero Dependencies**: Single executable with embedded frontend
+- 🌐 **Cross-platform**: Works on Windows, macOS, and Linux
+- 📱 **Responsive Design**: Mobile-friendly interface
+- 🎯 **Type-safe**: Full TypeScript support
 
-## 🏗️ Architecture
+## Architecture
 
-- **Backend**: Go server with embedded WebSocket support
-- **Frontend**: HTML/CSS/JavaScript client embedded in the binary
-- **Protocol**: WebSocket for real-time bidirectional communication
-- **Deployment**: Single static binary with embedded assets
+- **Frontend**: Next.js with TypeScript and shadcn/ui components
+- **Backend**: Go with WebSocket support using Gorilla WebSocket
+- **Build**: Next.js static export embedded in Go binary using `embed.FS`
 
-## 🚀 Quick Start
+## Quick Start
 
-### Running a Pre-built Binary
-
-1. Download the appropriate binary for your platform from the releases
-2. Run the executable:
+1. **Download** the latest binary for your platform from the releases
+2. **Run** the executable:
    ```bash
-   # Linux/macOS
    ./quiver-chat-[platform]
-   
-   # Windows
-   quiver-chat-windows-amd64.exe
    ```
-3. Open your browser and go to `http://localhost:8080`
-4. Choose a nickname and start chatting!
+3. **Open** your browser and navigate to `http://localhost:8080`
+4. **Choose** a nickname and start chatting!
 
-### Building from Source
+## Development
 
-#### Prerequisites
-- Go 1.21 or later
+### Prerequisites
 
-#### Build Steps
+- Go 1.24.2 or higher
+- Node.js 18+ and npm
+- Git
 
-1. Clone or download the source code
-2. Run the build script:
+### Setup
+
+1. **Clone** the repository:
+
    ```bash
-   # Linux/macOS
-   ./build.sh
-   
-   # Windows
-   build.bat
+   git clone <repository-url>
+   cd quiver.chat
    ```
-3. Find your binaries in the `dist/` directory
+2. **Install** frontend dependencies:
 
-#### Manual Build
-```bash
-# For your current platform
-go build -o quiver-chat .
+   ```bash
+   cd frontend
+   npm install
+   ```
+3. **Build** the application:
 
-# For a specific platform
-GOOS=linux GOARCH=amd64 go build -o quiver-chat-linux .
+   ```bash
+   cd ..
+   make all
+   ```
+
+### Development Workflow
+
+1. **Frontend Development**:
+
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+2. **Backend Development**:
+
+   ```bash
+   go run main.go
+   ```
+3. **Build for Production**:
+
+   ```bash
+   make all
+   ```
+
+## Project Structure
+
+```
+quiver.chat/
+├── main.go                 # Go backend server
+├── go.mod                  # Go dependencies
+├── build.sh                # Build script
+├── frontend/               # Next.js frontend
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── hooks/          # Custom hooks
+│   │   ├── types/          # TypeScript types
+│   │   └── app/            # Next.js app directory
+│   └── package.json        # Frontend dependencies
+└── dist/                   # Built binaries
 ```
 
-## 🖥️ Supported Platforms
+## How It Works
 
-- **Linux**: amd64, arm64
-- **macOS**: amd64 (Intel), arm64 (Apple Silicon)
-- **Windows**: amd64, arm64
+1. **Build Process**: The build script first compiles the Next.js frontend into static files
+2. **Embedding**: Go's `embed.FS` embeds the static files into the binary
+3. **Serving**: The Go server serves the embedded files and handles WebSocket connections
+4. **Real-time**: WebSocket connections enable real-time message exchange
 
-## 🎮 Usage
+## API Endpoints
 
-1. **Start the server**: Run the executable on the machine that will host the chat
-2. **Connect clients**: Users open their browsers to `http://[server-ip]:8080`
-3. **Choose nickname**: Each user picks a display name when joining
-4. **Chat away**: Send messages in real-time to all connected users
+- `GET /`: Serves the Next.js application
+- `WS /ws?username=<name>`: WebSocket endpoint for real-time chat
 
-## 🔧 Configuration
+## Message Format
 
-By default, the server runs on port 8080. You can modify the port in the source code if needed.
-
-## 📁 Project Structure
-
-```
-quiver-chat/
-├── main.go           # Main server application
-├── static/
-│   └── index.html    # Web client (embedded in binary)
-├── build.sh          # Unix build script
-├── build.bat         # Windows build script
-├── go.mod            # Go module file
-├── go.sum            # Go dependencies
-└── README.md         # This file
+```json
+{
+  "type": "message|system",
+  "username": "string",
+  "content": "string",
+  "time": "HH:MM"
+}
 ```
 
-## 🛡️ Security Considerations
+## Build Targets
 
-This is a simple chatroom application designed for trusted networks. Consider these security aspects:
+The build script creates executables for:
 
-- No authentication or authorization
-- Messages are not encrypted in transit (uses plain WebSocket)
-- No rate limiting or abuse protection
-- No message persistence or logging
-- Suitable for local networks, demos, or development
+- Linux (amd64, arm64)
+- macOS (amd64, arm64)
+- Windows (amd64, arm64)
 
-For production use in untrusted environments, consider adding:
-- HTTPS/WSS encryption
-- Authentication
-- Rate limiting
-- Input validation and sanitization
-- Message moderation
+## Contributing
 
-## 🤝 Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and build
+5. Submit a pull request
 
-This is a simple demonstration project. Feel free to fork and enhance it with additional features like:
+## License
 
-- User authentication
-- Message history persistence
-- File sharing
-- Private messaging
-- Room management
-- SSL/TLS support
-
-## 📄 License
-
-This project is provided as-is for educational and demonstration purposes.
-
-## 🔍 Technical Details
-
-- **Language**: Go 1.21+
-- **WebSocket Library**: gorilla/websocket
-- **Static Files**: Embedded using Go's embed package
-- **Binary Size**: ~8-12MB (varies by platform)
-- **Memory Usage**: Minimal, scales with number of connected users
-- **Concurrency**: Go routines handle each WebSocket connection
-
-## 🆘 Troubleshooting
-
-**Port already in use**
-- Another application is using port 8080
-- Kill the process or modify the port in the source code
-
-**Can't connect from other machines**
-- Make sure firewall allows incoming connections on port 8080
-- Use the server's IP address instead of localhost when connecting from other machines
-
-**Build fails**
-- Ensure Go 1.21+ is installed
-- Run `go mod tidy` to download dependencies
+This project is open source and available under the [MIT License](LICENSE).
 
 ---
 
-Made with ❤️ in Go 
+**No external dependencies required - just run and go!** 🎉

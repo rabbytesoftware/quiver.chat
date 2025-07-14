@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-//go:embed static/*
+//go:embed frontend/out/*
 var staticFiles embed.FS
 
 var upgrader = websocket.Upgrader{
@@ -173,8 +173,8 @@ func main() {
 	hub := newHub()
 	go hub.run()
 
-	// Get the static subdirectory from embedded filesystem
-	staticFS, err := fs.Sub(staticFiles, "static")
+	// Get the frontend/out subdirectory from embedded filesystem
+	staticFS, err := fs.Sub(staticFiles, "frontend/out")
 	if err != nil {
 		log.Fatal("Failed to create static filesystem:", err)
 	}
