@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"flag"
 	"fmt"
 	"io/fs"
 	"log"
@@ -12,7 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-//go:embed static/*
+//go:embed frontend/out/*
 var staticFiles embed.FS
 
 var upgrader = websocket.Upgrader{
@@ -165,11 +166,15 @@ func handleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Parse command line flags
+	port := flag.String("port", "8080", "port to run the server on")
+	flag.Parse()
+
 	hub := newHub()
 	go hub.run()
 
-	// Get the static subdirectory from embedded filesystem
-	staticFS, err := fs.Sub(staticFiles, "static")
+	// Get the frontend/out subdirectory from embedded filesystem
+	staticFS, err := fs.Sub(staticFiles, "frontend/out")
 	if err != nil {
 		log.Fatal("Failed to create static filesystem:", err)
 	}
@@ -182,9 +187,8 @@ func main() {
 		handleWebSocket(hub, w, r)
 	})
 
-	port := "8080"
-	fmt.Printf("🚀 Quiver Chat Server running on http://localhost:%s\n", port)
+	fmt.Printf("🚀 Quiver Chat Server running on http://localhost:%s\n", *port)
 	fmt.Printf("📱 Open your browser and navigate to the URL above\n")
 	
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+*port, nil))
 } 
