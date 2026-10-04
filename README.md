@@ -124,6 +124,10 @@ The build script creates executables for:
 - macOS (amd64, arm64)
 - Windows (amd64, arm64)
 
+## Run it inside Quiver
+
+Install the arrow described in [ARROW.md](ARROW.md) from Quiver, press Execute, then Open. The interface runs inside the Quiver app on a socket Quiver provides (the `-listen <unix socket>` flag), so no network port is opened.
+
 ## Contributing
 
 1. Fork the repository
