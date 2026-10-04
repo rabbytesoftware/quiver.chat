@@ -182,4 +182,22 @@ jobs:
         draft: false
         prerelease: false
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Move the nightly tag
+      run: |
+        git tag -f nightly
+        git push -f origin nightly
+
+    - name: Publish the rolling nightly release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: nightly
+        name: Nightly
+        prerelease: true
+        body: Rolling build of the latest main. Quiver's arrow manifest downloads from here.
+        files: |
+          dist/*.tar.gz
+          dist/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
