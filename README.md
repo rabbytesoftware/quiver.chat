@@ -67,7 +67,8 @@ A modern, real-time chat application built with **Next.js + shadcn/ui** frontend
 2. **Backend Development**:
 
    ```bash
-   go run main.go
+   go run main.go                      # TCP, http://localhost:8080
+   go run main.go -listen /tmp/chat.sock   # unix socket only, no TCP port
    ```
 3. **Build for Production**:
 
