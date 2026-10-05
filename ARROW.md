@@ -28,12 +28,12 @@ targets:
             darwin/arm64: https://github.com/rabbytesoftware/quiver.chat/releases/download/nightly/quiver-chat-macos-arm64.tar.gz
             windows/amd64: https://github.com/rabbytesoftware/quiver.chat/releases/download/nightly/quiver-chat-windows-amd64.zip
             windows/arm64: https://github.com/rabbytesoftware/quiver.chat/releases/download/nightly/quiver-chat-windows-arm64.zip
-          to: ./quiver-chat.archive
+          to: ${INSTALL_PATH}/quiver-chat.archive
           title: Downloading Quiver Chat
           timeout: 5m
         - type: extract
-          from: ./quiver-chat.archive
-          to: ./
+          from: ${INSTALL_PATH}/quiver-chat.archive
+          to: ${INSTALL_PATH}
           title: Unpacking Quiver Chat
           timeout: 1m
       update:
@@ -45,12 +45,12 @@ targets:
             darwin/arm64: https://github.com/rabbytesoftware/quiver.chat/releases/download/nightly/quiver-chat-macos-arm64.tar.gz
             windows/amd64: https://github.com/rabbytesoftware/quiver.chat/releases/download/nightly/quiver-chat-windows-amd64.zip
             windows/arm64: https://github.com/rabbytesoftware/quiver.chat/releases/download/nightly/quiver-chat-windows-arm64.zip
-          to: ./quiver-chat.archive
+          to: ${INSTALL_PATH}/quiver-chat.archive
           title: Downloading Quiver Chat
           timeout: 5m
         - type: extract
-          from: ./quiver-chat.archive
-          to: ./
+          from: ${INSTALL_PATH}/quiver-chat.archive
+          to: ${INSTALL_PATH}
           title: Unpacking Quiver Chat
           timeout: 1m
       execute:
