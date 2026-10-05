@@ -60,12 +60,12 @@ targets:
           path: /
         - type: run
           command:
-            default: ./quiver-chat-linux-amd64 -listen ${ARROW_UI_LISTEN}
-            linux/arm64: ./quiver-chat-linux-arm64 -listen ${ARROW_UI_LISTEN}
-            darwin/amd64: ./quiver-chat-macos-amd64 -listen ${ARROW_UI_LISTEN}
-            darwin/arm64: ./quiver-chat-macos-arm64 -listen ${ARROW_UI_LISTEN}
-            windows/amd64: ./quiver-chat-windows-amd64.exe -listen ${ARROW_UI_LISTEN}
-            windows/arm64: ./quiver-chat-windows-arm64.exe -listen ${ARROW_UI_LISTEN}
+            default: './quiver-chat-linux-amd64 -listen "${ARROW_UI_LISTEN}"'
+            linux/arm64: './quiver-chat-linux-arm64 -listen "${ARROW_UI_LISTEN}"'
+            darwin/amd64: './quiver-chat-macos-amd64 -listen "${ARROW_UI_LISTEN}"'
+            darwin/arm64: './quiver-chat-macos-arm64 -listen "${ARROW_UI_LISTEN}"'
+            windows/amd64: '.\quiver-chat-windows-amd64.exe -listen "${ARROW_UI_LISTEN}"'
+            windows/arm64: '.\quiver-chat-windows-arm64.exe -listen "${ARROW_UI_LISTEN}"'
           title: Starting Quiver Chat
       stop:
         - type: signal

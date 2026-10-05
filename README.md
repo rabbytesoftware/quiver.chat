@@ -67,8 +67,8 @@ A modern, real-time chat application built with **Next.js + shadcn/ui** frontend
 2. **Backend Development**:
 
    ```bash
-   go run main.go                      # TCP, http://localhost:8080
-   go run main.go -listen /tmp/chat.sock   # unix socket only, no TCP port
+   go run .                      # TCP, http://localhost:8080
+   go run . -listen /tmp/chat.sock   # unix socket only, no TCP port
    ```
 3. **Build for Production**:
 
@@ -80,7 +80,8 @@ A modern, real-time chat application built with **Next.js + shadcn/ui** frontend
 
 ```
 quiver.chat/
-├── main.go                 # Go backend server
+├── main.go                 # Entry point and flags
+├── server.go               # HTTP, WebSocket and listener setup
 ├── go.mod                  # Go dependencies
 ├── build.sh                # Build script
 ├── frontend/               # Next.js frontend
