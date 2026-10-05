@@ -127,7 +127,7 @@ The build script creates executables for:
 
 ## Run it inside Quiver
 
-Install the arrow described in [ARROW.md](ARROW.md) from Quiver, press Execute, then Open. The interface runs inside the Quiver app on a socket Quiver provides (the `-listen <unix socket>` flag), so no network port is opened.
+Install the arrow described in [ARROW.md](ARROW.md) from Quiver, press Execute, then Open. The interface runs inside the Quiver app on a socket Quiver provides (the `-listen <unix socket>` flag), so no network port is opened. The arrow declares this with a `ui` node on its `run` step: the interface lives while that process runs and closes when it exits.
 
 ## Contributing
 

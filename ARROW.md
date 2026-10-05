@@ -54,10 +54,6 @@ targets:
           title: Unpacking Quiver Chat
           timeout: 1m
       execute:
-        - type: ui
-          title: Quiver Chat
-          listen: [unix]
-          path: /
         - type: run
           command:
             default: './quiver-chat-linux-amd64 -listen "${ARROW_UI_LISTEN}"'
@@ -67,6 +63,10 @@ targets:
             windows/amd64: '.\quiver-chat-windows-amd64.exe -listen "${ARROW_UI_LISTEN}"'
             windows/arm64: '.\quiver-chat-windows-arm64.exe -listen "${ARROW_UI_LISTEN}"'
           title: Starting Quiver Chat
+          ui:
+            title: Quiver Chat
+            path: /
+            listen: [unix]
       stop:
         - type: signal
           signal: graceful
