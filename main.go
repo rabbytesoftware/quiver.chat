@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"flag"
 	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -59,7 +63,7 @@ func (h *Hub) run() {
 			h.mutex.Lock()
 			h.clients[client] = true
 			h.mutex.Unlock()
-			
+
 			// Send user joined message
 			joinMsg := Message{
 				Type:     "system",
@@ -74,7 +78,7 @@ func (h *Hub) run() {
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
-				
+
 				// Send user left message
 				leftMsg := Message{
 					Type:     "system",
@@ -107,7 +111,7 @@ func getCurrentTime() string {
 
 func (c *Client) writePump() {
 	defer c.conn.Close()
-	
+
 	for {
 		select {
 		case message, ok := <-c.send:
@@ -115,7 +119,7 @@ func (c *Client) writePump() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			
+
 			c.conn.WriteJSON(message)
 		}
 	}
@@ -136,7 +140,7 @@ func (c *Client) readPump(hub *Hub) {
 
 		msg.Username = c.username
 		msg.Time = getCurrentTime()
-		
+
 		hub.broadcast <- msg
 	}
 }
@@ -166,29 +170,33 @@ func handleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Parse command line flags
+	socket := flag.String("listen", "", "unix socket path to serve on (overrides -port)")
 	port := flag.String("port", "8080", "port to run the server on")
 	flag.Parse()
 
 	hub := newHub()
 	go hub.run()
 
-	// Get the frontend/out subdirectory from embedded filesystem
 	staticFS, err := fs.Sub(staticFiles, "frontend/out")
 	if err != nil {
 		log.Fatal("Failed to create static filesystem:", err)
 	}
 
-	// Serve static files
-	http.Handle("/", http.FileServer(http.FS(staticFS)))
-	
-	// WebSocket endpoint
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		handleWebSocket(hub, w, r)
-	})
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	fmt.Printf("🚀 Quiver Chat Server running on http://localhost:%s\n", *port)
-	fmt.Printf("📱 Open your browser and navigate to the URL above\n")
-	
-	log.Fatal(http.ListenAndServe(":"+*port, nil))
-} 
+	ln, err := listenAddr(*socket, *port)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if *socket != "" {
+		defer os.Remove(*socket)
+		fmt.Printf("🚀 Quiver Chat Server listening on unix socket %s\n", *socket)
+	} else {
+		fmt.Printf("🚀 Quiver Chat Server running on http://localhost:%s\n", *port)
+	}
+
+	if err := serve(ctx, ln, newHandler(hub, staticFS)); err != nil {
+		log.Fatal(err)
+	}
+}

@@ -67,7 +67,8 @@ A modern, real-time chat application built with **Next.js + shadcn/ui** frontend
 2. **Backend Development**:
 
    ```bash
-   go run main.go
+   go run .                      # TCP, http://localhost:8080
+   go run . -listen /tmp/chat.sock   # unix socket only, no TCP port
    ```
 3. **Build for Production**:
 
@@ -79,7 +80,8 @@ A modern, real-time chat application built with **Next.js + shadcn/ui** frontend
 
 ```
 quiver.chat/
-├── main.go                 # Go backend server
+├── main.go                 # Entry point and flags
+├── server.go               # HTTP, WebSocket and listener setup
 ├── go.mod                  # Go dependencies
 ├── build.sh                # Build script
 ├── frontend/               # Next.js frontend
@@ -122,6 +124,10 @@ The build script creates executables for:
 - Linux (amd64, arm64)
 - macOS (amd64, arm64)
 - Windows (amd64, arm64)
+
+## Run it inside Quiver
+
+Install the arrow described in [ARROW.md](ARROW.md) from Quiver, press Execute, then Open. The interface runs inside the Quiver app on a socket Quiver provides (the `-listen <unix socket>` flag), so no network port is opened. The arrow declares this with a `ui` node on its `run` step: the interface lives while that process runs and closes when it exits.
 
 ## Contributing
 
