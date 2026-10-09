@@ -27,6 +27,10 @@ A modern, real-time chat application built with **Next.js + shadcn/ui** frontend
 3. **Open** your browser and navigate to `http://localhost:8080`
 4. **Choose** a nickname and start chatting!
 
+## Install with Quiver
+
+`quiver.chat` is an arrow: Quiver downloads the release matching its resolved ref (the latest `vMAJOR.MINOR.PATCH` release by default, or `quiver.chat@nightly` for the rolling build) and serves the interface inside the app over a unix socket. This works on Windows, macOS and Linux.
+
 ## Development
 
 ### Prerequisites

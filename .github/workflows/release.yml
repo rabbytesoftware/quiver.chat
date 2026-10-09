@@ -120,18 +120,15 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
     
-    - name: Get version from commit
+    - name: Compute release tag
       id: version
       run: |
-        # Get version from Makefile or use timestamp
-        VERSION=$(grep 'VERSION :=' Makefile | cut -d' ' -f3 || echo "")
-        if [ -z "$VERSION" ]; then
-          VERSION="v$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
-        else
-          VERSION="v${VERSION}-$(git rev-parse --short HEAD)"
-        fi
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Version: $VERSION"
+        # A plain vMAJOR.MINOR.PATCH tag lands in Quiver's stable channel;
+        # a -suffix would make each release its own channel.
+        VERSION=$(grep 'VERSION :=' Makefile | cut -d' ' -f3)
+        TAG="v${VERSION}.$(git rev-list --count HEAD)"
+        echo "version=$TAG" >> $GITHUB_OUTPUT
+        echo "Version: $TAG"
 
     - name: Build cross-platform binaries and create archives
       run: make release-archives
@@ -181,6 +178,7 @@ jobs:
           dist/*.zip
         draft: false
         prerelease: false
+        make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -195,7 +193,7 @@ jobs:
         tag_name: nightly
         name: Nightly
         prerelease: true
-        body: Rolling build of the latest main. Quiver's arrow manifest downloads from here.
+        body: Rolling build of the latest main. Follow it with quiver.chat@nightly.
         files: |
           dist/*.tar.gz
           dist/*.zip
