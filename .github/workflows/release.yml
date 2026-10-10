@@ -92,7 +92,10 @@ jobs:
     needs: [test-backend, test-frontend]
     permissions:
       contents: write
-    
+    concurrency:
+      group: release
+      cancel-in-progress: false
+
     steps:
     - name: Check out code
       uses: actions/checkout@v4
@@ -120,18 +123,19 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
     
-    - name: Get version from commit
+    - name: Compute release tag
       id: version
       run: |
-        # Get version from Makefile or use timestamp
-        VERSION=$(grep 'VERSION :=' Makefile | cut -d' ' -f3 || echo "")
-        if [ -z "$VERSION" ]; then
-          VERSION="v$(date +'%Y%m%d')-$(git rev-parse --short HEAD)"
-        else
-          VERSION="v${VERSION}-$(git rev-parse --short HEAD)"
+        # A plain vMAJOR.MINOR.PATCH tag lands in Quiver's stable channel;
+        # a -suffix would make each release its own channel.
+        VERSION=$(grep 'VERSION :=' Makefile | cut -d' ' -f3)
+        if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+$'; then
+          echo "Makefile VERSION must be MAJOR.MINOR, got '$VERSION'" >&2
+          exit 1
         fi
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Version: $VERSION"
+        TAG="v${VERSION}.$(git rev-list --count HEAD)"
+        echo "version=$TAG" >> $GITHUB_OUTPUT
+        echo "Version: $TAG"
 
     - name: Build cross-platform binaries and create archives
       run: make release-archives
@@ -171,7 +175,7 @@ jobs:
         git log --oneline -10 --no-merges >> release_notes.md
     
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.version.outputs.version }}
         name: "Quiver Chat ${{ steps.version.outputs.version }}"
@@ -181,6 +185,8 @@ jobs:
           dist/*.zip
         draft: false
         prerelease: false
+        make_latest: true
+        target_commitish: ${{ github.sha }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -193,9 +199,10 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: nightly
+        target_commitish: ${{ github.sha }}
         name: Nightly
         prerelease: true
-        body: Rolling build of the latest main. Quiver's arrow manifest downloads from here.
+        body: Rolling build of the latest main. Follow it with quiver.chat@nightly.
         files: |
           dist/*.tar.gz
           dist/*.zip

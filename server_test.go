@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -19,7 +20,11 @@ import (
 // temp dirs are too long).
 func shortSocket(t *testing.T) string {
 	t.Helper()
-	dir, err := os.MkdirTemp("/tmp", "qc")
+	base := "/tmp"
+	if runtime.GOOS == "windows" {
+		base = ""
+	}
+	dir, err := os.MkdirTemp(base, "qc")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,6 +72,9 @@ func TestListenAddr_UnixSocketIsPrivate(t *testing.T) {
 	}
 	defer ln.Close()
 
+	if runtime.GOOS == "windows" {
+		t.Skip("windows has no unix permission bits; the socket sits in the user's profile")
+	}
 	info, err := os.Stat(sock)
 	if err != nil {
 		t.Fatal(err)

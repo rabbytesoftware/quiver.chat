@@ -27,6 +27,14 @@ A modern, real-time chat application built with **Next.js + shadcn/ui** frontend
 3. **Open** your browser and navigate to `http://localhost:8080`
 4. **Choose** a nickname and start chatting!
 
+## Install with Quiver
+
+`quiver.chat` is an arrow: Quiver downloads the release matching its resolved ref (the latest `vMAJOR.MINOR.PATCH` release by default, or `quiver.chat@nightly` for the rolling build) and serves the interface inside the app over a unix socket. This works on Windows, macOS and Linux.
+
+Only tags that carry release assets (`nightly` and the `vMAJOR.MINOR.PATCH` releases) can be pinned with `@ref`; a branch name 404s.
+
+Legacy `v27.7.1-<sha>` tags still exist and each forms its own channel, so a refless install follows the old channel until the first plain `vMAJOR.MINOR.PATCH` tag is published.
+
 ## Development
 
 ### Prerequisites

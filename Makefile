@@ -3,7 +3,8 @@
 
 # Variables
 APP_NAME := quiver-chat
-VERSION := 27.7.1
+# MAJOR.MINOR; the release workflow appends the patch (the commit count)
+VERSION := 27.7
 DIST_DIR := dist
 FRONTEND_DIR := frontend
 
