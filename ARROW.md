@@ -1,9 +1,8 @@
 # Quiver Chat
 
 A small real-time chat. Its interface opens inside the Quiver app, and the same
-chat room is also served on a TCP port (8080 by default), so anyone who can reach
-the machine can join from a browser at `http://<machine>:8080`. Change the port
-with the `CHAT_PORT` variable.
+chat room is also served on TCP port 8686, so anyone who can reach the machine
+can join from a browser at `http://<machine>:8686`.
 
 ```arrow
 schema: "arrow@v0"
@@ -20,12 +19,6 @@ metadata:
     icon: "https://raw.githubusercontent.com/rabbytesoftware/quiver.chat/main/docs/quiver-icon.svg"
     banner: "https://raw.githubusercontent.com/rabbytesoftware/quiver.chat/main/docs/quiver-banner.svg"
   tags: [chat, arrow-app]
-
-netbridge:
-  - name: CHAT_PORT
-    default: 8080
-    protocol: tcp
-    required: true
 
 targets:
   "*":
@@ -67,12 +60,12 @@ targets:
       execute:
         - type: run
           command:
-            default: './quiver-chat-linux-amd64 -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
-            linux/arm64: './quiver-chat-linux-arm64 -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
-            darwin/amd64: './quiver-chat-macos-amd64 -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
-            darwin/arm64: './quiver-chat-macos-arm64 -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
-            windows/amd64: '.\quiver-chat-windows-amd64.exe -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
-            windows/arm64: '.\quiver-chat-windows-arm64.exe -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
+            default: './quiver-chat-linux-amd64 -listen "${ARROW_UI_LISTEN}" -port 8686'
+            linux/arm64: './quiver-chat-linux-arm64 -listen "${ARROW_UI_LISTEN}" -port 8686'
+            darwin/amd64: './quiver-chat-macos-amd64 -listen "${ARROW_UI_LISTEN}" -port 8686'
+            darwin/arm64: './quiver-chat-macos-arm64 -listen "${ARROW_UI_LISTEN}" -port 8686'
+            windows/amd64: '.\quiver-chat-windows-amd64.exe -listen "${ARROW_UI_LISTEN}" -port 8686'
+            windows/arm64: '.\quiver-chat-windows-arm64.exe -listen "${ARROW_UI_LISTEN}" -port 8686'
           title: Starting Quiver Chat
           ui:
             title: Quiver Chat
