@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -170,9 +171,15 @@ func handleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	socket := flag.String("listen", "", "unix socket path to serve on (overrides -port)")
-	port := flag.String("port", "8080", "port to run the server on")
+	socket := flag.String("listen", "", "unix socket path to serve on; alone it opens no TCP port, together with -port it serves both")
+	port := flag.String("port", "8080", "TCP port to serve on (with -listen it is only used when given explicitly)")
 	flag.Parse()
+	portGiven := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "port" {
+			portGiven = true
+		}
+	})
 
 	hub := newHub()
 	go hub.run()
@@ -185,18 +192,30 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	ln, err := listenAddr(*socket, *port)
+	lns, err := listeners(*socket, *port, portGiven)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if *socket != "" {
-		defer os.Remove(*socket)
-		fmt.Printf("🚀 Quiver Chat Server listening on unix socket %s\n", *socket)
-	} else {
-		fmt.Printf("🚀 Quiver Chat Server running on http://localhost:%s\n", *port)
+	for _, ln := range lns {
+		if ln.Addr().Network() == "unix" {
+			defer os.Remove(*socket)
+			fmt.Printf("🚀 Quiver Chat Server listening on unix socket %s\n", *socket)
+		} else {
+			fmt.Printf("🚀 Quiver Chat Server running on http://localhost:%s\n", tcpPort(ln))
+		}
 	}
 
-	if err := serve(ctx, ln, newHandler(hub, staticFS)); err != nil {
+	if err := serveAll(ctx, lns, newHandler(hub, staticFS)); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// tcpPort is the port a TCP listener actually bound, which differs from the
+// flag when the flag is 0.
+func tcpPort(ln net.Listener) string {
+	_, p, err := net.SplitHostPort(ln.Addr().String())
+	if err != nil {
+		return "?"
+	}
+	return p
 }

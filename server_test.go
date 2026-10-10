@@ -173,3 +173,168 @@ func TestServe_WebSocketBroadcastBetweenTwoClients(t *testing.T) {
 		}
 	}
 }
+
+func TestListeners_SocketAloneOpensNoTCPPort(t *testing.T) {
+	lns, err := listeners(shortSocket(t), "0", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer closeAll(lns)
+	if len(lns) != 1 || lns[0].Addr().Network() != "unix" {
+		t.Fatalf("want only the unix socket, got %d listeners", len(lns))
+	}
+}
+
+func TestListeners_ExplicitPortAddsTCPNextToTheSocket(t *testing.T) {
+	lns, err := listeners(shortSocket(t), "0", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer closeAll(lns)
+	if len(lns) != 2 || lns[0].Addr().Network() != "unix" || lns[1].Addr().Network() != "tcp" {
+		t.Fatalf("want unix socket then tcp, got %d listeners", len(lns))
+	}
+}
+
+func TestListeners_TCPOnlyWithoutASocket(t *testing.T) {
+	lns, err := listeners("", "0", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer closeAll(lns)
+	if len(lns) != 1 || lns[0].Addr().Network() != "tcp" {
+		t.Fatalf("want only tcp, got %d listeners", len(lns))
+	}
+}
+
+func TestListeners_FailedTCPBindReleasesTheSocket(t *testing.T) {
+	busy, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer busy.Close()
+	_, port, _ := net.SplitHostPort(busy.Addr().String())
+
+	sock := shortSocket(t)
+	if _, err := listeners(sock, port, true); err == nil {
+		t.Fatal("binding a busy port must fail")
+	}
+	// The socket opened first must not stay behind, or a retry would see a dead file.
+	if c, err := net.DialTimeout("unix", sock, 200*time.Millisecond); err == nil {
+		c.Close()
+		t.Fatal("socket still accepting after a failed start")
+	}
+}
+
+// startBoth serves one room on a unix socket and a TCP port, as the arrow does.
+func startBoth(t *testing.T) (sock, tcpAddr string, cancel context.CancelFunc) {
+	t.Helper()
+	hub := newHub()
+	go hub.run()
+	sock = shortSocket(t)
+	lns, err := listeners(sock, "0", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tcpAddr = lns[1].Addr().String()
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	static := fstest.MapFS{"index.html": {Data: []byte("<html>chat</html>")}}
+	go func() { done <- serveAll(ctx, lns, newHandler(hub, static)) }()
+	t.Cleanup(func() {
+		cancel()
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Error("serveAll did not stop after cancel")
+		}
+	})
+	return sock, tcpAddr, cancel
+}
+
+func TestServeAll_OneRoomOverTheSocketAndTCP(t *testing.T) {
+	sock, tcpAddr, _ := startBoth(t)
+
+	// The page is served on both transports.
+	resp, err := unixClient(sock).Get("http://chat/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	tcpResp, err := http.Get("http://" + tcpAddr + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tcpResp.Body.Close()
+	if resp.StatusCode != http.StatusOK || tcpResp.StatusCode != http.StatusOK {
+		t.Fatalf("socket %d, tcp %d", resp.StatusCode, tcpResp.StatusCode)
+	}
+
+	// alice sits in the Quiver window (socket), bob in a browser (TCP): one room.
+	unixDialer := websocket.Dialer{NetDialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+		var d net.Dialer
+		return d.DialContext(ctx, "unix", sock)
+	}}
+	alice, _, err := unixDialer.Dial("ws://chat/ws?username=alice", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer alice.Close()
+	bob, _, err := websocket.DefaultDialer.Dial("ws://"+tcpAddr+"/ws?username=bob", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer bob.Close()
+
+	time.Sleep(100 * time.Millisecond)
+	if err := alice.WriteMessage(websocket.TextMessage, []byte(`{"type":"message","content":"hello from the window"}`)); err != nil {
+		t.Fatal(err)
+	}
+	_ = bob.SetReadDeadline(time.Now().Add(3 * time.Second))
+	for {
+		_, msg, err := bob.ReadMessage()
+		if err != nil {
+			t.Fatalf("the browser never saw the message sent from the socket client: %v", err)
+		}
+		if strings.Contains(string(msg), "hello from the window") {
+			break
+		}
+	}
+
+	// And the other way round.
+	if err := bob.WriteMessage(websocket.TextMessage, []byte(`{"type":"message","content":"hello from the browser"}`)); err != nil {
+		t.Fatal(err)
+	}
+	_ = alice.SetReadDeadline(time.Now().Add(3 * time.Second))
+	for {
+		_, msg, err := alice.ReadMessage()
+		if err != nil {
+			t.Fatalf("the Quiver window never saw the message sent from TCP: %v", err)
+		}
+		if strings.Contains(string(msg), "hello from the browser") {
+			return
+		}
+	}
+}
+
+func TestServeAll_CancelStopsBothListeners(t *testing.T) {
+	sock, tcpAddr, cancel := startBoth(t)
+	cancel()
+
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		_, unixErr := net.DialTimeout("unix", sock, 100*time.Millisecond)
+		_, tcpErr := net.DialTimeout("tcp", tcpAddr, 100*time.Millisecond)
+		if unixErr != nil && tcpErr != nil {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Fatal("a listener is still accepting after cancel")
+}
+
+func closeAll(lns []net.Listener) {
+	for _, ln := range lns {
+		_ = ln.Close()
+	}
+}

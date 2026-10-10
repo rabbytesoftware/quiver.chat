@@ -1,14 +1,15 @@
 # Quiver Chat
 
-A small real-time chat. The arrow serves the chat on a TCP port (8080 by default),
-so anyone who can reach the machine can open it in a browser at
-`http://<machine>:8080`. Change the port with the `CHAT_PORT` variable.
+A small real-time chat. Its interface opens inside the Quiver app, and the same
+chat room is also served on a TCP port (8080 by default), so anyone who can reach
+the machine can join from a browser at `http://<machine>:8080`. Change the port
+with the `CHAT_PORT` variable.
 
 ```arrow
 schema: "arrow@v0"
 metadata:
   name: rabbytesoftware.quiver-chat
-  description: Real-time chat served on a TCP port, open it in any browser.
+  description: Real-time chat that opens inside Quiver and is also reachable on a TCP port.
   license: MIT
   url: https://github.com/rabbytesoftware/quiver.chat
   quiver: github.com/rabbytesoftware/quiver.chat
@@ -63,13 +64,17 @@ targets:
       execute:
         - type: run
           command:
-            default: './quiver-chat-linux-amd64 -port "${CHAT_PORT}"'
-            linux/arm64: './quiver-chat-linux-arm64 -port "${CHAT_PORT}"'
-            darwin/amd64: './quiver-chat-macos-amd64 -port "${CHAT_PORT}"'
-            darwin/arm64: './quiver-chat-macos-arm64 -port "${CHAT_PORT}"'
-            windows/amd64: '.\quiver-chat-windows-amd64.exe -port "${CHAT_PORT}"'
-            windows/arm64: '.\quiver-chat-windows-arm64.exe -port "${CHAT_PORT}"'
+            default: './quiver-chat-linux-amd64 -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
+            linux/arm64: './quiver-chat-linux-arm64 -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
+            darwin/amd64: './quiver-chat-macos-amd64 -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
+            darwin/arm64: './quiver-chat-macos-arm64 -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
+            windows/amd64: '.\quiver-chat-windows-amd64.exe -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
+            windows/arm64: '.\quiver-chat-windows-arm64.exe -listen "${ARROW_UI_LISTEN}" -port "${CHAT_PORT}"'
           title: Starting Quiver Chat
+          ui:
+            title: Quiver Chat
+            path: /
+            listen: [unix]
       stop:
         - type: signal
           signal: graceful
