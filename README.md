@@ -29,7 +29,7 @@ A modern, real-time chat application built with **Next.js + shadcn/ui** frontend
 
 ## Install with Quiver
 
-`quiver.chat` is an arrow: Quiver downloads the release matching its resolved ref (the latest `vMAJOR.MINOR.PATCH` release by default, or `quiver.chat@nightly` for the rolling build) and serves the interface inside the app over a unix socket. This works on Windows, macOS and Linux.
+`quiver.chat` is an arrow: Quiver downloads the release matching its resolved ref (the latest `vMAJOR.MINOR.PATCH` release by default, or `quiver.chat@nightly` for the rolling build) and serves the chat on a TCP port (8080 by default, change it with the `CHAT_PORT` variable), so you can open it in a browser at `http://<machine>:8080`. This works on Windows, macOS and Linux.
 
 Only tags that carry release assets (`nightly` and the `vMAJOR.MINOR.PATCH` releases) can be pinned with `@ref`; a branch name 404s.
 
