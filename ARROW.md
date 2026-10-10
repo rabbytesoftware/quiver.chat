@@ -17,9 +17,6 @@ metadata:
     - name: rabbytesoftware
       url: https://github.com/rabbytesoftware
   media:
-    icon: "https://raw.githubusercontent.com/rabbytesoftware/quiver.core/develop/docs/quiver-icon.svg"
-    banner: "https://raw.githubusercontent.com/rabbytesoftware/quiver.core/develop/docs/quiver-banner.svg"
-  media:
     icon: "https://raw.githubusercontent.com/rabbytesoftware/quiver.chat/main/docs/quiver-icon.svg"
     banner: "https://raw.githubusercontent.com/rabbytesoftware/quiver.chat/main/docs/quiver-banner.svg"
   tags: [chat, arrow-app]
